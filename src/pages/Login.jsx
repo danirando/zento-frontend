@@ -24,7 +24,7 @@ const handleSubmit = async (e) => {
     
     // 2. Login
     // 🚨 CORREZIONE QUI: AGGIUNGI IL PREFISSO /api 🚨
-    await api.post('/api/login', { 
+    await api.post('/login', { 
       email, 
       password,
       remember: rememberMe 
