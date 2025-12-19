@@ -75,6 +75,8 @@ function Dashboard() {
   const [activeConversationId, setActiveConversationId] = useState(null)
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [historyError, setHistoryError] = useState(null)
+  const [isCooldown, setIsCooldown] = useState(false)
+  const [cooldownSeconds, setCooldownSeconds] = useState(0)
 
   const messagesEndRef = useRef(null)
 
@@ -224,10 +226,26 @@ function Dashboard() {
         const aiResponseData = response.data;
         const aiResponseText = aiResponseData.reply || "Risposta AI non ricevuta."; 
 
-        // Se è una nuova conversazione, salviamo l'ID e aggiorniamo la sidebar
+        // Se riceviamo un titolo dal backend (nuovo o aggiornato), aggiorniamo la lista locale
+        if (aiResponseData.title) {
+            setConversations(prev => {
+                const existing = prev.find(c => c.id === (activeConversationId || aiResponseData.conversation_id));
+                if (existing) {
+                    return prev.map(c => c.id === existing.id ? { ...c, title: aiResponseData.title } : c);
+                } else {
+                    // Se è una nuova chat che non era ancora in lista
+                    return [{
+                        id: aiResponseData.conversation_id,
+                        title: aiResponseData.title,
+                        created_at: new Date().toISOString()
+                    }, ...prev];
+                }
+            });
+        }
+
+        // Se è una nuova conversazione, salviamo l'ID
         if (!activeConversationId && aiResponseData.conversation_id) {
             setActiveConversationId(aiResponseData.conversation_id);
-            fetchConversations();
         }
 
         const aiMessage = {
@@ -248,11 +266,7 @@ function Dashboard() {
           setTimeout(() => handleSmartFallback("vague"), 800)
         }
 
-        // Se è una nuova conversazione, aggiorniamo la sidebar per mostrare il nuovo item
-        if (isNewConversation) {
-            // Un breve delay assicura che il backend abbia terminato la persistenza
-            setTimeout(() => fetchConversations(), 300);
-        }
+        // Non è più necessario chiamare fetchConversations() qui perché abbiamo aggiornato lo stato locale sopra
 
     } catch (error) {
         let errorMessage = "Errore di connessione.";
@@ -261,7 +275,20 @@ function Dashboard() {
         if (error.response?.data?.error) {
           errorMessage = error.response.data.error;
         } else if (error.response?.status === 429) {
-          errorMessage = "Troppe richieste. Per favore attendi un momento prima di riprovare.";
+          errorMessage = "Troppe richieste. Per favore attendi qualche secondo prima di riprovare.";
+          // Attiviamo il cooldown di 5 secondi
+          setIsCooldown(true);
+          setCooldownSeconds(5);
+          const timer = setInterval(() => {
+            setCooldownSeconds(prev => {
+              if (prev <= 1) {
+                clearInterval(timer);
+                setIsCooldown(false);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
         } else if (error.response?.status === 404) {
           errorMessage = "Endpoint non trovato (404). Verifica le rotte backend.";
         }
@@ -519,16 +546,16 @@ function Dashboard() {
                 ref={inputRef}
                 type="text"
                 className="chat-input"
-                placeholder={isTyping ? "L'assistente sta scrivendo..." : "Scrivi un messaggio..."}
+                placeholder={isCooldown ? `Cooldown (${cooldownSeconds}s)...` : (isTyping ? "L'assistente sta scrivendo..." : "Scrivi un messaggio...")}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                disabled={isTyping}
+                disabled={isTyping || isCooldown}
                 autoFocus
                 />
                 <button
                 type="submit"
                 className="btn-send"
-                disabled={!inputValue.trim() || isTyping}
+                disabled={!inputValue.trim() || isTyping || isCooldown}
                 >
                 <SendIcon />
                 </button>
