@@ -216,9 +216,19 @@ function Dashboard() {
     setIsTyping(true)
 
     try {
-        const response = await api.post('/api/chat', { message: text.trim() });
+        const response = await api.post('/api/chat', { 
+            message: text.trim(),
+            conversation_id: activeConversationId 
+        });
+        
         const aiResponseData = response.data;
-        const aiResponseText = aiResponseData.reply || aiResponseData.message_text || "Risposta AI non formattata."; 
+        const aiResponseText = aiResponseData.reply || "Risposta AI non ricevuta."; 
+
+        // Se è una nuova conversazione, salviamo l'ID e aggiorniamo la sidebar
+        if (!activeConversationId && aiResponseData.conversation_id) {
+            setActiveConversationId(aiResponseData.conversation_id);
+            fetchConversations();
+        }
 
         const aiMessage = {
             id: Date.now() + 1,
