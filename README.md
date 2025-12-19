@@ -1,0 +1,5 @@
+Ho implementato il Fallback Intelligente nella dashboard. Ecco come funziona ora l'app:
+
+Rilevamento Incomprensione: Se l'IA risponde con frasi come "Non ho capito", "Spiegati meglio" o se la risposta è estremamente corta (meno di 10 caratteri), l'app attiva automaticamente il fallback suggerendo modi per riformulare la domanda (es. "Puoi farmi un esempio?", "Spiegamelo in modo semplice").
+Timer di Inattività: Se la chat rimane ferma per più di un minuto dopo l'ultimo messaggio dell'IA, Zento mostrerà gentilmente dei suggerimenti per riprendere la conversazione o esplorare nuove funzionalità.
+UI Dedicata: Ho aggiunto una nuova sezione visiva con design "glassmorphism" e bordi tratteggiati che appare con un'animazione fluida, contenente dei chip interattivi cliccabili per inviare istantaneamente un nuovo prompt.

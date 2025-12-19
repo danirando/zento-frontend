@@ -259,3 +259,15 @@ h6 {
   font-size: 1.5rem;
   box-shadow: var(--shadow-md);
 }
+
+@media (max-width: 480px) {
+  .card-login {
+    padding: 2rem 1.5rem;
+    margin: 1rem;
+    border-radius: var(--radius-xl);
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+}
